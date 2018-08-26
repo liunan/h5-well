@@ -1,0 +1,143 @@
+<html>
+
+<head>
+  <style>
+    .black {
+      fill: black
+    }
+
+    .gray {
+      fill: gray
+    }
+
+    .invisible {
+      display: none
+    }
+  </style>
+  <title>走井游戏</title>
+</head>
+
+<body>
+
+  <svg width="100%" height="100%">
+    <!---->
+    <path d="M32 32 l128 0 l0 128 l-128 0 l128,-128" fill="none" stroke="black"></path>
+    <line x1="32" y1="32" x2="160" y2="160" stroke="black" />
+
+    <circle cx="96" cy="96" r="20" class="invisible" id='p0' />
+
+    <circle cx="32" cy="32" r="20" class="gray" id='p1' />
+    <circle cx="160" cy="32" r="20" class="black" id='p2' />
+
+    <circle cx="160" cy="160" r="20" class="black" id='p3' />
+    <circle cx="32" cy="160" r="20" class="gray" id='p4' />
+
+    <rect id="turnSide" x="200" y="16" width="64" height="32" class="black"></rect> 
+  </svg>
+
+
+  <script>
+
+
+    /**
+    0|NA|1|1|1|1|31|0x1F
+    1|1|NA|1|0|0|5|0x5
+    2|1|1|NA|1|0|11|0xB
+    3|1|0|1|NA|1|21|0x15
+    4|1|0|0|1|NA|9|0x9
+    */
+    var moveCandiate = {
+      'p0': 0x1F,
+      'p1': 0x5,
+      'p2': 0xB,
+      'p3': 0x15,
+      'p4': 0x9
+    };
+
+    // 移动目标位转棋盘位置
+    var mask2pos = {
+      1: 'p0',
+      2: 'p1',
+      4: 'p2',
+      8: 'p3',
+      16: 'p4'
+    }
+
+    var pos2mask = {
+      'p0': 1,
+      'p1': 2,
+      'p2': 4,
+      'p3': 8,
+      'p4': 16
+    }
+
+    //空位所在位置
+    var blankPos = 1;//0位
+    var round = 0;
+    var current_player = ['black', 'gray'];
+
+    function pawnclick() {
+      if (this.className.baseVal != current_player[round % 2]) {
+        console.log('not your turn');
+        return;
+      }
+      console.log(`click me ${this.id}`);
+
+      //获取可移动位置
+      var moveDest = moveCandiate[this.id] & blankPos;
+      if (moveDest != 0) {
+        console.log(`move dest ${moveDest} boardPost ${mask2pos[moveDest]}`);
+
+        blankPos = pos2mask[this.id];//将空位置为当前子的位置
+
+        //如果可以移动，则移动该子，并取消事件监听，进入下一轮
+
+        //获取目标位置
+        var destPos = document.getElementById(mask2pos[moveDest]);
+        destPos.className.baseVal = this.className.baseVal;
+        this.className.baseVal = "invisible";
+
+        nextTurn();//换手
+      }
+      else//没有气不可移动
+      {
+        console.log(`${this.id} 不可动`);
+      }
+    }
+
+    /*移动*/
+    function init() {
+      
+      elements = document.querySelectorAll('circle');
+
+      for (var ele of elements) {
+        console.log(ele);
+        ele.addEventListener('click', pawnclick);
+      }
+
+    }
+
+    function nextTurn()
+    {
+      ++round;
+      var class_selector = current_player[round % 2];//根据手数确定是哪边
+      document.getElementById('turnSide').className.baseVal = class_selector;
+      var pawns = document.getElementsByClassName(class_selector);
+      var hasMove = 0;
+      for( var pawn of pawns)
+      {
+        hasMove |= (moveCandiate[pawn.id] & blankPos);
+      }
+
+      if(!hasMove)
+      {
+        console.log(`${class_selector} loose!`);
+      }
+      console.log(pawns);
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
